@@ -240,15 +240,39 @@ export const generateFlashcards = async (
     }
 };
 
-// Mock Chat Object for Demo Mode
+// Mock Chat Object for Demo Mode with Simluated Responses
 const createMockChat = (language: Language) => {
     return {
         sendMessage: async (msg: string) => {
-            await new Promise(resolve => setTimeout(resolve, 800));
+            await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate thinking delay
+            
+            const lowerMsg = msg.toLowerCase();
+            let responseText = "";
+            
+            if (language === 'pt') {
+                if (lowerMsg.includes('olá') || lowerMsg.includes('oi') || lowerMsg.includes('bom dia')) {
+                    responseText = "Olá! Como sou uma versão simulada do Tutor (Sem Chave API), posso ajudá-lo com exemplos básicos. Sobre qual tema médico você gostaria de conversar?";
+                } else if (lowerMsg.includes('obrigado') || lowerMsg.includes('tchau')) {
+                     responseText = "De nada! Bons estudos.";
+                } else if (lowerMsg.length < 5) {
+                    responseText = "Poderia elaborar um pouco mais sua pergunta? Lembre-se, estou operando em modo offline simulado.";
+                } else {
+                    responseText = `[Resposta Simulada] Essa é uma excelente pergunta sobre "${msg.substring(0, 20)}...". \n\nEm um cenário real com a IA conectada, eu explicaria a fisiopatologia detalhada, os sinais clínicos e o tratamento. \n\nPor exemplo, se estivéssemos falando sobre insuficiência cardíaca, eu abordaria a fração de ejeção reduzida vs. preservada. Como você relacionaria isso com os sintomas do paciente?`;
+                }
+            } else {
+                if (lowerMsg.includes('hello') || lowerMsg.includes('hi') || lowerMsg.includes('good morning')) {
+                    responseText = "Hello! As I am a simulated version of the Tutor (No API Key), I can help you with basic examples. What medical topic would you like to discuss?";
+                } else if (lowerMsg.includes('thank') || lowerMsg.includes('bye')) {
+                     responseText = "You're welcome! Happy studying.";
+                } else if (lowerMsg.length < 5) {
+                    responseText = "Could you elaborate on your question? Remember, I am operating in simulated offline mode.";
+                } else {
+                     responseText = `[Simulated Response] That is an excellent question about "${msg.substring(0, 20)}...". \n\nIn a live scenario with the AI connected, I would explain the detailed pathophysiology, clinical signs, and treatment. \n\nFor example, if we were discussing heart failure, I would cover reduced vs. preserved ejection fraction. How would you relate that to the patient's symptoms?`;
+                }
+            }
+
             return {
-                text: language === 'pt' 
-                    ? "[Modo Demo] Não consigo processar sua solicitação específica porque a Chave API não está configurada. Por favor, adicione sua chave API para conversar com a IA real."
-                    : "[Demo Mode] I cannot process your specific request because the API Key is not configured. Please add your API key to chat with the real AI."
+                text: responseText
             };
         }
     } as Chat;
