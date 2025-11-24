@@ -260,9 +260,13 @@ export const createTutorChat = (style: LearningStyle, period: string, language: 
 
     const aiInstance = getAi();
     const learningStyleInstruction = getLearningStylePrompt(style, language);
+    
+    // Updated system instructions to include Socratic Method / Follow-up Questions
     const systemInstruction = language === 'pt'
-        ? `Você é um tutor clínico especialista para estudantes de medicina. Seu objetivo é explicar conceitos médicos complexos de forma clara e precisa. O estudante está no ${period}. Adapte a profundidade e complexidade de suas explicações para este nível. Suas respostas devem ser adaptadas para um aluno com perfil ${style}. ${learningStyleInstruction}`
-        : `You are an expert clinical tutor for medical students. Your goal is to explain complex medical concepts clearly and accurately. The student is in their ${period}. Tailor the depth and complexity of your explanations for this level. Your responses should be tailored for a ${style} learner. ${learningStyleInstruction}`;
+        ? `Você é um tutor clínico especialista para estudantes de medicina. Seu objetivo é explicar conceitos médicos complexos de forma clara e precisa. O estudante está no ${period}. Adapte a profundidade e complexidade de suas explicações para este nível. Suas respostas devem ser adaptadas para um aluno com perfil ${style}. ${learningStyleInstruction} 
+           IMPORTANTE: Adote uma abordagem socrática. Após explicar o conceito solicitado, SEMPRE termine sua resposta fazendo uma pergunta de acompanhamento relevante (follow-up) para verificar a compreensão do aluno ou desafiá-lo a aplicar o conhecimento (por exemplo, um mini cenário clínico, uma pergunta sobre fisiopatologia relacionada ou diagnóstico diferencial). Mantenha o diálogo dinâmico.`
+        : `You are an expert clinical tutor for medical students. Your goal is to explain complex medical concepts clearly and accurately. The student is in their ${period}. Tailor the depth and complexity of your explanations for this level. Your responses should be tailored for a ${style} learner. ${learningStyleInstruction}
+           IMPORTANT: Adopt a Socratic approach. After explaining the requested concept, ALWAYS end your response by asking a relevant follow-up question to check the student's understanding or challenge them to apply the knowledge (e.g., a mini clinical vignette, a question about related pathophysiology, or differential diagnosis). Keep the dialogue dynamic.`;
 
     const chatConfig: any = {
         model: 'gemini-2.5-flash',
