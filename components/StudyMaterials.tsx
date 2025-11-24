@@ -86,9 +86,9 @@ const StudyMaterials: React.FC<StudyMaterialsProps> = ({ materials, setMaterials
 
   const getFileIcon = (mimeType: string) => {
       if (mimeType === 'application/pdf') {
-          return <FileTextIcon className="w-5 h-5" />;
+          return <FileTextIcon className="w-5 h-5 text-red-500" />;
       }
-      return <ImageIcon className="w-5 h-5" />;
+      return <ImageIcon className="w-5 h-5 text-blue-500" />;
   };
 
   return (
@@ -133,7 +133,7 @@ const StudyMaterials: React.FC<StudyMaterialsProps> = ({ materials, setMaterials
                     {materials.map(file => (
                         <div key={file.id} className="bg-white p-4 rounded-2xl border border-[#E5E5EA] shadow-sm flex items-center justify-between group relative overflow-hidden">
                             <div className="flex items-center gap-3 overflow-hidden">
-                                <div className="w-10 h-10 bg-[#F2F2F7] rounded-xl flex items-center justify-center text-[#8E8E93] flex-shrink-0">
+                                <div className="w-10 h-10 bg-[#F2F2F7] rounded-xl flex items-center justify-center flex-shrink-0">
                                     {getFileIcon(file.type)}
                                 </div>
                                 <div className="min-w-0">
