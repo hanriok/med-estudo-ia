@@ -38,7 +38,7 @@ const getLearningStylePrompt = (style: LearningStyle, language: Language): strin
 const getMockQuestion = (topic: string, language: Language): Question => {
     if (language === 'pt') {
         return {
-            question: `[Modo Demo - Sem Chave API] Qual é a principal função das mitocôndrias em uma célula? (Tópico: ${topic})`,
+            question: `[Simulação] Qual é a principal função das mitocôndrias em uma célula? (Tópico: ${topic})`,
             options: {
                 A: "Síntese de proteínas",
                 B: "Produção de ATP (Energia)",
@@ -46,11 +46,11 @@ const getMockQuestion = (topic: string, language: Language): Question => {
                 D: "Armazenamento de DNA"
             },
             correctAnswer: "B",
-            explanation: "Esta é uma resposta de demonstração. Em um ambiente real com a Chave API configurada, a IA geraria uma explicação clínica detalhada baseada no seu estilo de aprendizado. As mitocôndrias são conhecidas como a 'casa de força' da célula."
+            explanation: "As mitocôndrias são conhecidas como a 'casa de força' da célula porque geram a maior parte do suprimento de adenosina trifosfato (ATP) da célula, usado como fonte de energia química. (Esta é uma resposta gerada localmente para fins de demonstração)."
         };
     }
     return {
-        question: `[Demo Mode - No API Key] What is the primary function of mitochondria in a cell? (Topic: ${topic})`,
+        question: `[Simulation] What is the primary function of mitochondria in a cell? (Topic: ${topic})`,
         options: {
             A: "Protein Synthesis",
             B: "ATP Production (Energy)",
@@ -58,7 +58,7 @@ const getMockQuestion = (topic: string, language: Language): Question => {
             D: "DNA Storage"
         },
         correctAnswer: "B",
-        explanation: "This is a demo response. In a live environment with the API Key set, the AI would generate a detailed clinical explanation based on your learning style. Mitochondria are known as the powerhouse of the cell."
+        explanation: "Mitochondria are known as the powerhouse of the cell because they generate most of the cell's supply of adenosine triphosphate (ATP), used as a source of chemical energy. (This is a locally generated response for demo purposes)."
     };
 };
 
@@ -68,22 +68,35 @@ const getMockFlashcards = (topic: string, count: number, language: Language): Fl
         cards.push({
             id: i,
             question: language === 'pt' 
-                ? `[Demo ${i+1}] O que é ${topic}?` 
-                : `[Demo ${i+1}] What is ${topic}?`,
+                ? `[Flashcard ${i+1}] Conceito chave sobre ${topic}?` 
+                : `[Flashcard ${i+1}] Key concept regarding ${topic}?`,
             answer: language === 'pt'
-                ? "Esta é uma resposta gerada localmente porque a Chave API não foi detectada."
-                : "This is a locally generated answer because the API Key was not detected."
+                ? "Explicação detalhada do conceito médico simulado. Em modo real, a IA geraria definições precisas baseadas no material."
+                : "Detailed explanation of the simulated medical concept. In live mode, AI would generate accurate definitions based on the material."
         });
     }
     return cards;
 };
 
+const getMockDiagnosisEvaluation = (language: Language): string => {
+    if (language === 'pt') {
+        return "AVALIAÇÃO DE DIAGNÓSTICO [SIMULADA]\n\nCom base na sua interação, seu raciocínio clínico parece sólido. Você fez perguntas pertinentes sobre a duração dos sintomas e fatores agravantes.\n\nPontos Fortes:\n- Investigou o histórico familiar.\n- Considerou diagnósticos diferenciais.\n\nÁreas para Melhoria:\n- Poderia ter perguntado mais sobre alergias medicamentosas.\n\nDiagnóstico Correto Provável: Enxaqueca com Aura.\n\n(Nota: Esta é uma avaliação simulada para demonstração.)";
+    }
+    return "DIAGNOSIS EVALUATION [SIMULATED]\n\nBased on your interaction, your clinical reasoning appears sound. You asked pertinent questions regarding symptom duration and aggravating factors.\n\nStrengths:\n- Investigated family history.\n- Considered differential diagnoses.\n\nAreas for Improvement:\n- Could have asked more about drug allergies.\n\nLikely Correct Diagnosis: Migraine with Aura.\n\n(Note: This is a simulated evaluation for demonstration.)";
+};
+
+const getMockSummary = (language: Language): string => {
+    if (language === 'pt') {
+        return "**Resumo do Documento [Simulado]**\n\n*   **Tópico Principal:** Diretrizes Clínicas de Hipertensão\n*   **Ponto Chave 1:** O diagnóstico requer múltiplas medições em ocasiões diferentes.\n*   **Ponto Chave 2:** A mudança no estilo de vida é a primeira linha de tratamento para pré-hipertensão.\n*   **Conclusão:** O monitoramento regular é essencial para prevenir complicações cardiovasculares.\n\n(A IA real analisaria o conteúdo específico do seu arquivo PDF/Imagem).";
+    }
+    return "**Document Summary [Simulated]**\n\n*   **Main Topic:** Hypertension Clinical Guidelines\n*   **Key Point 1:** Diagnosis requires multiple measurements on separate occasions.\n*   **Key Point 2:** Lifestyle modification is the first line of treatment for pre-hypertension.\n*   **Conclusion:** Regular monitoring is essential to prevent cardiovascular complications.\n\n(The real AI would analyze the specific content of your PDF/Image file).";
+}
+
 // --- END MOCK DATA ---
 
 export const generateQuestion = async (topic: string, style: LearningStyle, period: string, language: Language, materials?: StudyMaterial[]): Promise<Question> => {
   if (!isApiKeySet()) {
-      console.warn("API Key missing. Returning mock question.");
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       return getMockQuestion(topic, language);
   }
 
@@ -160,7 +173,6 @@ export const generateFlashcards = async (
     materials?: StudyMaterial[]
 ): Promise<Flashcard[]> => {
     if (!isApiKeySet()) {
-        console.warn("API Key missing. Returning mock flashcards.");
         await new Promise(resolve => setTimeout(resolve, 1000));
         return getMockFlashcards(inputText || "Demo Topic", count, language);
     }
@@ -251,23 +263,19 @@ const createMockChat = (language: Language) => {
             
             if (language === 'pt') {
                 if (lowerMsg.includes('olá') || lowerMsg.includes('oi') || lowerMsg.includes('bom dia')) {
-                    responseText = "Olá! Como sou uma versão simulada do Tutor (Sem Chave API), posso ajudá-lo com exemplos básicos. Sobre qual tema médico você gostaria de conversar?";
-                } else if (lowerMsg.includes('obrigado') || lowerMsg.includes('tchau')) {
-                     responseText = "De nada! Bons estudos.";
-                } else if (lowerMsg.length < 5) {
-                    responseText = "Poderia elaborar um pouco mais sua pergunta? Lembre-se, estou operando em modo offline simulado.";
+                    responseText = "Oi. Doutor, não estou me sentindo bem.";
+                } else if (lowerMsg.includes('dor')) {
+                     responseText = "Sim, dói muito. Principalmente quando me movo.";
                 } else {
-                    responseText = `[Resposta Simulada] Essa é uma excelente pergunta sobre "${msg.substring(0, 20)}...". \n\nEm um cenário real com a IA conectada, eu explicaria a fisiopatologia detalhada, os sinais clínicos e o tratamento. \n\nPor exemplo, se estivéssemos falando sobre insuficiência cardíaca, eu abordaria a fração de ejeção reduzida vs. preservada. Como você relacionaria isso com os sintomas do paciente?`;
+                    responseText = "Não sei explicar direito, só sei que incomoda bastante.";
                 }
             } else {
-                if (lowerMsg.includes('hello') || lowerMsg.includes('hi') || lowerMsg.includes('good morning')) {
-                    responseText = "Hello! As I am a simulated version of the Tutor (No API Key), I can help you with basic examples. What medical topic would you like to discuss?";
-                } else if (lowerMsg.includes('thank') || lowerMsg.includes('bye')) {
-                     responseText = "You're welcome! Happy studying.";
-                } else if (lowerMsg.length < 5) {
-                    responseText = "Could you elaborate on your question? Remember, I am operating in simulated offline mode.";
+                if (lowerMsg.includes('hello') || lowerMsg.includes('hi')) {
+                    responseText = "Hi. Doc, I don't feel good.";
+                } else if (lowerMsg.includes('pain')) {
+                     responseText = "Yeah, it hurts a lot. Especially when I move.";
                 } else {
-                     responseText = `[Simulated Response] That is an excellent question about "${msg.substring(0, 20)}...". \n\nIn a live scenario with the AI connected, I would explain the detailed pathophysiology, clinical signs, and treatment. \n\nFor example, if we were discussing heart failure, I would cover reduced vs. preserved ejection fraction. How would you relate that to the patient's symptoms?`;
+                     responseText = "I don't know how to explain it, it just bothers me.";
                 }
             }
 
@@ -329,18 +337,18 @@ export const createTutorChat = (style: LearningStyle, period: string, language: 
 
 const patientScenarios = {
     en: [
-        "You are a 58-year-old male with a history of hypertension and smoking, presenting with crushing substernal chest pain that started 1 hour ago.",
-        "You are a 22-year-old female college student presenting with a severe headache, photophobia, and neck stiffness.",
-        "You are a 65-year-old female with type 2 diabetes presenting with a painful, swollen, red right lower leg.",
-        "You are a 45-year-old female presenting with right upper quadrant abdominal pain that worsens after eating fatty meals.",
-        "You are a 30-year-old male presenting with a productive cough, fever, and shortness of breath for three days."
+        "You are a 58-year-old male with a history of hypertension and smoking, presenting with crushing substernal chest pain that started 1 hour ago. Diagnosis: Myocardial Infarction.",
+        "You are a 22-year-old female college student presenting with a severe headache, photophobia, and neck stiffness. Diagnosis: Bacterial Meningitis.",
+        "You are a 65-year-old female with type 2 diabetes presenting with a painful, swollen, red right lower leg. Diagnosis: Cellulitis.",
+        "You are a 45-year-old female presenting with right upper quadrant abdominal pain that worsens after eating fatty meals. Diagnosis: Cholecystitis.",
+        "You are a 30-year-old male presenting with a productive cough, fever, and shortness of breath for three days. Diagnosis: Community Acquired Pneumonia."
     ],
     pt: [
-        "Você é um homem de 58 anos com histórico de hipertensão e tabagismo, apresentando dor torácica subesternal em aperto que começou há 1 hora.",
-        "Você é uma estudante universitária de 22 anos apresentando dor de cabeça intensa, fotofobia e rigidez na nuca.",
-        "Você é uma mulher de 65 anos com diabetes tipo 2 apresentando a perna direita dolorida, inchada e vermelha.",
-        "Você é uma mulher de 45 anos apresentando dor abdominal no quadrante superior direito que piora após refeições gordurosas.",
-        "Você é um homem de 30 anos apresentando tosse produtiva, febre e falta de ar há três dias."
+        "Você é um homem de 58 anos com histórico de hipertensão e tabagismo, apresentando dor torácica subesternal em aperto que começou há 1 hora. Diagnóstico: Infarto do Miocárdio.",
+        "Você é uma estudante universitária de 22 anos apresentando dor de cabeça intensa, fotofobia e rigidez na nuca. Diagnóstico: Meningite Bacteriana.",
+        "Você é uma mulher de 65 anos com diabetes tipo 2 apresentando a perna direita dolorida, inchada e vermelha. Diagnóstico: Celulite Infecciosa.",
+        "Você é uma mulher de 45 anos apresentando dor abdominal no quadrante superior direito que piora após refeições gordurosas. Diagnóstico: Colecistite.",
+        "Você é um homem de 30 anos apresentando tosse produtiva, febre e falta de ar há três dias. Diagnóstico: Pneumonia Comunitária."
     ]
 };
 
@@ -351,33 +359,38 @@ export const createPatientChat = (period: string, language: Language, materials?
 
     const aiInstance = getAi();
     let scenarios = patientScenarios[language];
-    let scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+    // Select a scenario but DO NOT reveal the diagnosis line to the user context implicitly
+    let fullScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+    // We pass the full scenario to the System Instruction so the AI knows how to act,
+    // but we strictly instruct it to hide the diagnosis.
     
     if (materials && materials.length > 0) {
-        scenario = language === 'pt'
+        fullScenario = language === 'pt'
             ? "O cenário clínico é baseado nos documentos médicos ou imagens fornecidos no início do chat. Aja como o paciente descrito ou implícito nesses materiais."
             : "The clinical scenario is based on the medical documents or images provided at the start of the chat. Act as the patient described or implied in those materials.";
     }
     
     const systemInstruction = language === 'pt'
       ? `Você está atuando como um paciente em uma simulação médica para um estudante no ${period}.
-         Cenário Clínico: ${scenario}
+         Cenário Secreto (NÃO REVELE): ${fullScenario}
          
-         DIRETRIZES DE COMPORTAMENTO:
-         1. Seja SIMPLES e DIRETO. Não faça discursos longos.
-         2. Use linguagem coloquial (de leigo). Evite termos médicos técnicos a menos que um paciente comum saberia.
-         3. Responda apenas o que for perguntado, de forma curta.
-         4. Expresse emoções de forma realista (dor, preocupação) mas sem exagero dramático.
-         5. Não revele seu diagnóstico final, apenas descreva os sintomas.`
+         DIRETRIZES ESTRITAS DE COMPORTAMENTO:
+         1. Você é LEIGO. NÃO use terminologia médica. Fale como uma pessoa comum.
+         2. Seja BREVE e DIRETO. Responda com frases curtas. Não dê palestras.
+         3. NÃO revele informações voluntariamente. O aluno deve PERGUNTAR para descobrir.
+         4. Se o aluno perguntar "O que você tem?", diga apenas os sintomas físicos ("Dói aqui", "Estou enjoado"), não o diagnóstico.
+         5. Expresse desconforto de forma realista, mas sem exageros teatrais.
+         6. FORCE o aluno a pensar na próxima pergunta.`
       : `You are acting as a patient in a medical simulation for a student in their ${period}.
-         Clinical Scenario: ${scenario}
+         Secret Scenario (DO NOT REVEAL): ${fullScenario}
          
-         BEHAVIOR GUIDELINES:
-         1. Be SIMPLE and DIRECT. Do not give long speeches.
-         2. Use layperson language. Avoid technical medical terms unless a common patient would know them.
-         3. Answer only what is asked, keeping it short.
-         4. Express emotions realistically (pain, worry) but without over-dramatizing.
-         5. Do not reveal your diagnosis, only describe symptoms.`;
+         STRICT BEHAVIOR GUIDELINES:
+         1. You are a LAYPERSON. DO NOT use medical terminology. Speak like a regular person.
+         2. Be BRIEF and DIRECT. Answer in short sentences. Do not lecture.
+         3. DO NOT volunteer information. The student must ASK to find out.
+         4. If the student asks "What do you have?", only describe physical symptoms ("It hurts here", "I feel sick"), not the diagnosis.
+         5. Express discomfort realistically, but without theatrical exaggeration.
+         6. FORCE the student to think of the next question.`;
 
     const chatConfig: any = {
         model: 'gemini-2.5-flash',
@@ -405,7 +418,7 @@ export const createPatientChat = (period: string, language: Language, materials?
             },
             {
                 role: 'model',
-                parts: [{ text: language === 'pt' ? "Estou incorporando esses registros à minha persona." : "I am embodying the patient from these records." }]
+                parts: [{ text: language === 'pt' ? "Certo. (Assumindo personagem baseado nos exames)." : "Okay. (Adopting persona based on records)." }]
             }
         ];
     }
@@ -414,35 +427,85 @@ export const createPatientChat = (period: string, language: Language, materials?
 };
 
 export const evaluateDiagnosis = async (chatHistory: ChatMessage[], style: LearningStyle, period: string, language: Language): Promise<string> => {
+   // Legacy function, kept for compatibility if needed, but replaced by evaluateTreatment in new UI
+   return "Use new evaluateTreatment function";
+};
+
+export const evaluateTreatment = async (
+    chatHistory: ChatMessage[], 
+    treatmentPlan: string,
+    language: Language
+): Promise<{ correct: boolean; title: string; feedback: string }> => {
     if (!isApiKeySet()) {
-        return language === 'pt' 
-            ? "DIAGNÓSTICO [MODO DEMO]\n\nComo estamos em modo de demonstração sem chave de API, não posso avaliar seu diagnóstico em detalhes. Por favor, configure a API Key."
-            : "DIAGNOSIS [DEMO MODE]\n\nSince we are in demo mode without an API key, I cannot evaluate your diagnosis in detail. Please configure the API Key.";
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        return {
+            correct: true,
+            title: language === 'pt' ? "Conduta Correta (Simulado)" : "Correct Management (Simulated)",
+            feedback: language === 'pt' 
+                ? "Esta é uma resposta simulada. No modo real, a IA analisaria seu diagnóstico e prescrição com base no cenário oculto."
+                : "This is a simulated response. In live mode, AI would analyze your diagnosis and prescription based on the hidden scenario."
+        };
     }
 
     const aiInstance = getAi();
-    const learningStyleInstruction = getLearningStylePrompt(style, language);
-    const historyString = chatHistory.map(m => `${m.role}: ${m.content}`).join('\n');
-    const prompt = language === 'pt'
-        ? `Com base na seguinte interação com o paciente, avalie o diagnóstico final de um estudante de medicina do ${period}. Forneça feedback construtivo sobre suas perguntas, a precisão do diagnóstico e o que poderia ter sido feito de diferente, considerando o nível de conhecimento esperado para o ${period}. A interação é a seguinte:\n\n${historyString}\n\nSua avaliação deve ser útil e educacional. ${learningStyleInstruction}`
-        : `Based on the following patient interaction, evaluate the final diagnosis of a medical student in their ${period}. Provide constructive feedback on their questioning, the accuracy of their diagnosis, and what they could have done differently, considering the expected knowledge level for a student in their ${period}. The interaction is as follows:\n\n${historyString}\n\nYour evaluation should be helpful and educational. ${learningStyleInstruction}`;
     
+    // Construct interaction history
+    const historyText = chatHistory.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
+    
+    const prompt = language === 'pt'
+        ? `Aja como um professor supervisor médico sênior.
+           
+           Histórico da Conversa:
+           ${historyText}
+           
+           Plano de Tratamento/Diagnóstico do Aluno: "${treatmentPlan}"
+           
+           Avalie se o aluno identificou corretamente a condição implícita na conversa e se o tratamento proposto é adequado e curativo.
+           
+           Retorne APENAS um JSON no seguinte formato:
+           {
+             "correct": boolean, (true se o diagnóstico e tratamento principal estiverem corretos)
+             "title": string, (ex: "Diagnóstico Correto" ou "Conduta Inadequada")
+             "feedback": string (Explicação concisa de 2-3 frases sobre o porquê está correto ou errado, e qual seria o padrão ouro).
+           }`
+        : `Act as a senior medical supervisor.
+           
+           Conversation History:
+           ${historyText}
+           
+           Student's Treatment/Diagnosis Plan: "${treatmentPlan}"
+           
+           Evaluate if the student correctly identified the condition implied in the conversation and if the proposed treatment is adequate and curative.
+           
+           Return ONLY JSON in the following format:
+           {
+             "correct": boolean, (true if diagnosis and main treatment are correct)
+             "title": string, (e.g., "Correct Diagnosis" or "Inadequate Management")
+             "feedback": string (Concise 2-3 sentence explanation of why it is correct or wrong, and what the gold standard would be).
+           }`;
+
     const response = await aiInstance.models.generateContent({
         model: "gemini-2.5-flash",
-        contents: prompt
+        contents: prompt,
+        config: { responseMimeType: "application/json" }
     });
 
-    const evaluationHeader = language === 'pt' ? 'AVALIAÇÃO DO DIAGNÓSTICO' : 'DIAGNOSIS EVALUATION';
-    
-    return `${evaluationHeader}\n\n${response.text}`;
+    try {
+        return JSON.parse(response.text);
+    } catch (e) {
+        console.error("Error parsing evaluation:", e);
+        return {
+            correct: false,
+            title: "Error",
+            feedback: "Failed to evaluate treatment plan."
+        };
+    }
 };
 
 export const generateSummary = async (material: StudyMaterial, language: Language): Promise<string> => {
     if (!isApiKeySet()) {
         await new Promise(resolve => setTimeout(resolve, 1500));
-        return language === 'pt' 
-            ? "[Resumo Demo] Este é um resumo simulado porque a chave da API não está configurada. O documento parece conter informações médicas importantes. Em modo real, a IA analisaria o texto completo e forneceria pontos-chave."
-            : "[Demo Summary] This is a simulated summary because the API key is not configured. The document appears to contain important medical information. In live mode, the AI would analyze the full text and provide key takeaways.";
+        return getMockSummary(language);
     }
 
     const aiInstance = getAi();

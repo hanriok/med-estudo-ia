@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { User, Flashcard, Language, View, StudyMaterial } from '../types';
 import { generateFlashcards } from '../services/geminiService';
 import { translations } from '../lib/translations';
-import { Loader2, ArrowLeftIcon, MicrophoneIcon, Volume2Icon, PaperclipIcon, UploadCloudIcon, FileIcon, TrashIcon } from './icons';
+import { Loader2, ArrowLeftIcon, MicrophoneIcon, Volume2Icon, PaperclipIcon, UploadCloudIcon, TrashIcon, FileTextIcon, ImageIcon } from './icons';
 import { useSpeech } from '../hooks/useSpeech';
 
 interface FlashcardGeneratorProps {
@@ -256,7 +256,7 @@ const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({ user, language,
                                     multiple 
                                     ref={fileInputRef} 
                                     className="hidden" 
-                                    accept="image/png, image/jpeg, application/pdf"
+                                    accept=".pdf, .png, .jpg, .jpeg, image/png, image/jpeg, application/pdf"
                                     onChange={handleFileChange}
                                 />
                                 <UploadCloudIcon className="w-8 h-8 text-[#8E8E93] mb-2" />
@@ -278,7 +278,7 @@ const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({ user, language,
                                         multiple 
                                         ref={fileInputRef} 
                                         className="hidden" 
-                                        accept="image/png, image/jpeg, application/pdf"
+                                        accept=".pdf, .png, .jpg, .jpeg, image/png, image/jpeg, application/pdf"
                                         onChange={handleFileChange}
                                     />
                                 </div>
@@ -287,7 +287,7 @@ const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({ user, language,
                                         <div key={m.id} className="bg-white border border-[#E5E5EA] rounded-xl p-2 flex items-center justify-between">
                                             <div className="flex items-center gap-2 overflow-hidden">
                                                 <div className="w-8 h-8 bg-[#F2F2F7] rounded-lg flex items-center justify-center text-[#8E8E93] flex-shrink-0">
-                                                    <FileIcon className="w-4 h-4" />
+                                                    {m.type === 'application/pdf' ? <FileTextIcon className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
                                                 </div>
                                                 <span className="text-sm text-[#1C1C1E] truncate">{m.name}</span>
                                             </div>

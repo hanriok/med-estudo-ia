@@ -127,6 +127,14 @@ type Translations = {
         placeholderDiagnosis: string;
         error: string;
         usingContext: string;
+        treatmentTitle: string;
+        treatmentPlaceholder: string;
+        submitTreatment: string;
+        evaluationTitle: string;
+        correctDiagnosis: string;
+        incorrectDiagnosis: string;
+        nextCase: string;
+        tryAgain: string;
     };
     progressTracker: {
         title: string;
@@ -145,6 +153,7 @@ type Translations = {
         analytics: string;
         focusAreas: string;
         needsReview: string;
+        analyticsTitle: string;
     };
     materials: {
         title: string;
@@ -297,7 +306,15 @@ export const translations: Translations = {
         placeholderQuestion: "Ask your patient a question...",
         placeholderDiagnosis: "Enter your diagnosis here...",
         error: "Sorry, I encountered an error. Please try again.",
-        usingContext: "Simulating Case from Uploaded Materials"
+        usingContext: "Simulating Case from Uploaded Materials",
+        treatmentTitle: "Clinical Conclusion",
+        treatmentPlaceholder: "Enter diagnosis and treatment plan (e.g., 'Migraine. Prescribe Sumatriptan')...",
+        submitTreatment: "Prescribe & Cure",
+        evaluationTitle: "Case Evaluation",
+        correctDiagnosis: "Correct Management",
+        incorrectDiagnosis: "Incorrect Management",
+        nextCase: "Next Case",
+        tryAgain: "Review Case"
     },
     progressTracker: {
         title: "Analytics Dashboard",
@@ -316,6 +333,7 @@ export const translations: Translations = {
         analytics: "Detailed Analytics",
         focusAreas: "Focus Areas",
         needsReview: "Needs Review",
+        analyticsTitle: "Analytics"
     },
     materials: {
         title: "Study Materials",
@@ -492,7 +510,15 @@ export const translations: Translations = {
         placeholderQuestion: "Faça uma pergunta ao seu paciente...",
         placeholderDiagnosis: "Digite seu diagnóstico aqui...",
         error: "Desculpe, encontrei um erro. Por favor, tente novamente.",
-        usingContext: "Simulando Caso com Materiais Enviados"
+        usingContext: "Simulando Caso com Materiais Enviados",
+        treatmentTitle: "Conclusão Clínica",
+        treatmentPlaceholder: "Digite o diagnóstico e plano de tratamento (ex: 'Enxaqueca. Prescrever Sumatriptano')...",
+        submitTreatment: "Prescrever e Curar",
+        evaluationTitle: "Avaliação do Caso",
+        correctDiagnosis: "Conduta Correta",
+        incorrectDiagnosis: "Conduta Incorreta",
+        nextCase: "Próximo Caso",
+        tryAgain: "Revisar Caso"
     },
     progressTracker: {
         title: "Painel de Análise",
@@ -511,6 +537,7 @@ export const translations: Translations = {
         analytics: "Análise Detalhada",
         focusAreas: "Áreas de Foco",
         needsReview: "Precisa de Revisão",
+        analyticsTitle: "Análises"
     },
     materials: {
         title: "Materiais de Estudo",
