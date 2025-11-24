@@ -1,0 +1,7 @@
+{
+  "name": "MedIQ AI: Your Medical Study Co-pilot",
+  "description": "An integrated AI-powered platform for medical students, combining an intelligent question bank, adaptive simulations, automatic flashcard generation, an AI clinical tutor, a realistic patient simulator, and personalized progress tracking.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
