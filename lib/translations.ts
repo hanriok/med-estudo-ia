@@ -104,6 +104,9 @@ type Translations = {
         difficultyHard: string;
         useMaterials: string;
         useText: string;
+        uploadFiles: string;
+        dropFiles: string;
+        filesSelected: string;
     };
     clinicalTutor: {
         title: string;
@@ -150,6 +153,10 @@ type Translations = {
         uploadSubtext: string;
         uploadedFiles: string;
         noFiles: string;
+        summarizeButton: string;
+        generatingSummary: string;
+        summaryTitle: string;
+        closeButton: string;
     };
     settings: {
         title: string;
@@ -267,7 +274,10 @@ export const translations: Translations = {
         difficultyMedium: "Medium",
         difficultyHard: "Hard",
         useMaterials: "Use Uploaded Materials",
-        useText: "Use Topic / Text"
+        useText: "Use Topic / Text",
+        uploadFiles: "Upload Files",
+        dropFiles: "Drag & drop files (PDF, PNG, JPG)",
+        filesSelected: "files selected as context"
     },
     clinicalTutor: {
         title: "AI Clinical Tutor",
@@ -313,7 +323,11 @@ export const translations: Translations = {
         uploadArea: "Drag & drop files here, or click to select",
         uploadSubtext: "Supports PDF, PNG, JPG (Max 5MB)",
         uploadedFiles: "Uploaded Files",
-        noFiles: "No materials uploaded yet."
+        noFiles: "No materials uploaded yet.",
+        summarizeButton: "Summarize",
+        generatingSummary: "Generating...",
+        summaryTitle: "Document Summary",
+        closeButton: "Close"
     },
     settings: {
         title: "Settings",
@@ -455,7 +469,10 @@ export const translations: Translations = {
         difficultyMedium: "Médio",
         difficultyHard: "Difícil",
         useMaterials: "Usar Materiais Enviados",
-        useText: "Usar Tópico / Texto"
+        useText: "Usar Tópico / Texto",
+        uploadFiles: "Enviar Arquivos",
+        dropFiles: "Arraste arquivos (PDF, PNG, JPG)",
+        filesSelected: "arquivos selecionados como contexto"
     },
     clinicalTutor: {
         title: "Tutor Clínico IA",
@@ -501,7 +518,11 @@ export const translations: Translations = {
         uploadArea: "Arraste e solte arquivos aqui, ou clique para selecionar",
         uploadSubtext: "Suporta PDF, PNG, JPG (Máx 5MB)",
         uploadedFiles: "Arquivos Enviados",
-        noFiles: "Nenhum material enviado ainda."
+        noFiles: "Nenhum material enviado ainda.",
+        summarizeButton: "Resumir",
+        generatingSummary: "Gerando...",
+        summaryTitle: "Resumo do Documento",
+        closeButton: "Fechar"
     },
     settings: {
         title: "Configurações",

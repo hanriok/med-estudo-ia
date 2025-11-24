@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 import { LearningStyle, Question, Flashcard, ChatMessage, Language, StudyMaterial } from '../types';
 
@@ -410,4 +411,39 @@ export const evaluateDiagnosis = async (chatHistory: ChatMessage[], style: Learn
     const evaluationHeader = language === 'pt' ? 'AVALIAÇÃO DO DIAGNÓSTICO' : 'DIAGNOSIS EVALUATION';
     
     return `${evaluationHeader}\n\n${response.text}`;
+};
+
+export const generateSummary = async (material: StudyMaterial, language: Language): Promise<string> => {
+    if (!isApiKeySet()) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        return language === 'pt' 
+            ? "[Resumo Demo] Este é um resumo simulado porque a chave da API não está configurada. O documento parece conter informações médicas importantes. Em modo real, a IA analisaria o texto completo e forneceria pontos-chave."
+            : "[Demo Summary] This is a simulated summary because the API key is not configured. The document appears to contain important medical information. In live mode, the AI would analyze the full text and provide key takeaways.";
+    }
+
+    const aiInstance = getAi();
+    const prompt = language === 'pt'
+        ? "Por favor, forneça um resumo abrangente e conciso do documento ou imagem fornecida. Destaque os principais conceitos médicos, definições importantes e relevância clínica. Organize a saída em tópicos (bullet points) claros para fácil leitura."
+        : "Please provide a comprehensive yet concise summary of the provided document or image. Highlight key medical concepts, important definitions, and clinical relevance. Organize the output into clear bullet points for easy reading.";
+
+    const parts = [
+        { text: prompt },
+        {
+            inlineData: {
+                mimeType: material.type,
+                data: material.data
+            }
+        }
+    ];
+
+    try {
+        const response = await aiInstance.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: { parts }
+        });
+        return response.text;
+    } catch (e) {
+        console.error("Summary generation failed:", e);
+        throw new Error("Failed to generate summary.");
+    }
 };

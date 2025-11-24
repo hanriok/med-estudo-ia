@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { User, ProgressData, View, Language, StudyMaterial } from './types';
 import { translations } from './lib/translations';
@@ -75,7 +76,7 @@ const App: React.FC = () => {
       case 'question_bank':
         return <QuestionBank user={currentUser} updateProgress={updateProgress} language={language} onNavigate={setCurrentView} materials={studyMaterials} />;
       case 'flashcards':
-        return <FlashcardGenerator user={currentUser} language={language} onNavigate={setCurrentView} materials={studyMaterials} />;
+        return <FlashcardGenerator user={currentUser} language={language} onNavigate={setCurrentView} materials={studyMaterials} setMaterials={setStudyMaterials} />;
       case 'tutor':
         return <ClinicalTutor user={currentUser} language={language} onNavigate={setCurrentView} isVoiceOutputEnabled={isVoiceOutputEnabled} materials={studyMaterials} />;
       case 'patient_sim':

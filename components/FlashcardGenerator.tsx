@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { User, Flashcard, Language, View, StudyMaterial } from '../types';
 import { generateFlashcards } from '../services/geminiService';
 import { translations } from '../lib/translations';
-import { Loader2, RefreshCwIcon, ArrowLeftIcon, ArrowRightIcon, MicrophoneIcon, Volume2Icon, LayersIcon, PaperclipIcon } from './icons';
+import { Loader2, ArrowLeftIcon, MicrophoneIcon, Volume2Icon, PaperclipIcon, UploadCloudIcon, FileIcon, TrashIcon } from './icons';
 import { useSpeech } from '../hooks/useSpeech';
 
 interface FlashcardGeneratorProps {
@@ -11,9 +11,10 @@ interface FlashcardGeneratorProps {
   language: Language;
   onNavigate: (view: View) => void;
   materials: StudyMaterial[];
+  setMaterials: React.Dispatch<React.SetStateAction<StudyMaterial[]>>;
 }
 
-const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({ user, language, onNavigate, materials }) => {
+const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({ user, language, onNavigate, materials, setMaterials }) => {
   const T = translations[language];
 
   const [topic, setTopic] = useState<string>('');
@@ -26,18 +27,73 @@ const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({ user, language,
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { transcript, isListening, startListening, stopListening, speak, isSpeaking, cancelSpeaking } = useSpeech({ language });
-  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (transcript) {
         setTopic(transcript);
     }
   }, [transcript]);
 
+  const processFile = (file: File) => {
+    // Validate file type
+    if (!['image/png', 'image/jpeg', 'application/pdf'].includes(file.type)) {
+        alert("Only PNG, JPEG, and PDF files are supported.");
+        return;
+    }
+    
+    // Validate size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        alert("File size must be less than 5MB.");
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const result = e.target?.result as string;
+        // Strip the data:image/png;base64, part
+        const base64Data = result.split(',')[1];
+        
+        const newMaterial: StudyMaterial = {
+            id: Math.random().toString(36).substring(7),
+            name: file.name,
+            type: file.type,
+            data: base64Data
+        };
+        setMaterials(prev => [...prev, newMaterial]);
+        setUseMaterials(true); // Automatically switch to using materials
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+        Array.from(e.target.files).forEach(processFile);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.files) {
+        Array.from(e.dataTransfer.files).forEach(processFile);
+    }
+  };
+
+  const handleDeleteMaterial = (id: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      setMaterials(prev => prev.filter(m => m.id !== id));
+  };
+
   const handleGenerate = async () => {
     if (!topic && !useMaterials) {
       setError(T.flashcardGenerator.errorTopic);
       return;
     }
+    if (useMaterials && materials.length === 0) {
+        setError(T.flashcardGenerator.uploadFiles);
+        return;
+    }
+
     cancelSpeaking();
     setIsLoading(true);
     setError(null);
@@ -126,23 +182,21 @@ const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({ user, language,
 
         {/* Configuration Section */}
         <div className="bg-[#F2F2F7] p-4 rounded-3xl border border-[#E5E5EA] mb-10 space-y-4 shadow-sm">
-             {materials.length > 0 && (
-                <div className="flex items-center justify-center gap-4 bg-white p-2 rounded-xl">
-                    <button 
-                        onClick={() => setUseMaterials(false)}
-                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${!useMaterials ? 'bg-[#007AFF] text-white shadow-sm' : 'text-[#8E8E93] hover:bg-[#F2F2F7]'}`}
-                    >
-                        {T.flashcardGenerator.useText}
-                    </button>
-                    <button 
-                        onClick={() => setUseMaterials(true)}
-                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${useMaterials ? 'bg-[#007AFF] text-white shadow-sm' : 'text-[#8E8E93] hover:bg-[#F2F2F7]'}`}
-                    >
-                         <PaperclipIcon className="w-4 h-4" />
-                        {T.flashcardGenerator.useMaterials}
-                    </button>
-                </div>
-            )}
+             <div className="flex items-center justify-center gap-4 bg-white p-2 rounded-xl">
+                <button 
+                    onClick={() => setUseMaterials(false)}
+                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${!useMaterials ? 'bg-[#007AFF] text-white shadow-sm' : 'text-[#8E8E93] hover:bg-[#F2F2F7]'}`}
+                >
+                    {T.flashcardGenerator.useText}
+                </button>
+                <button 
+                    onClick={() => setUseMaterials(true)}
+                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${useMaterials ? 'bg-[#007AFF] text-white shadow-sm' : 'text-[#8E8E93] hover:bg-[#F2F2F7]'}`}
+                >
+                        <PaperclipIcon className="w-4 h-4" />
+                    {T.flashcardGenerator.useMaterials}
+                </button>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-white p-3 rounded-2xl border border-[#E5E5EA] flex items-center justify-between px-4">
@@ -174,14 +228,14 @@ const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({ user, language,
                 </div>
             </div>
 
-            <div className="bg-white p-2 rounded-3xl shadow-sm border border-[#E5E5EA] flex flex-col md:flex-row items-stretch gap-2">
+            <div className="bg-white p-2 rounded-3xl shadow-sm border border-[#E5E5EA] flex flex-col items-stretch gap-2">
                 {!useMaterials ? (
                     <div className="relative flex-grow">
                         <textarea
                             value={topic}
                             onChange={(e) => setTopic(e.target.value)}
                             placeholder={T.flashcardGenerator.placeholder}
-                            className="w-full p-4 pr-12 bg-transparent border-none resize-none focus:ring-0 text-[#1C1C1E] placeholder-[#AEAEB2] h-20 md:h-auto"
+                            className="w-full p-4 pr-12 bg-transparent border-none resize-none focus:ring-0 text-[#1C1C1E] placeholder-[#AEAEB2] h-32"
                             disabled={isLoading}
                         />
                         <button onClick={isListening ? stopListening : startListening} className="absolute right-2 top-2 p-2 rounded-full hover:bg-[#F2F2F7] transition-colors">
@@ -189,132 +243,148 @@ const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({ user, language,
                         </button>
                     </div>
                 ) : (
-                    <div className="flex-grow flex items-center justify-center text-[#8E8E93] italic p-4 bg-[#F9F9F9] rounded-2xl">
-                         <PaperclipIcon className="w-5 h-5 mr-2" />
-                         {materials.length} file(s) selected as context
+                    <div className="flex-grow p-4 bg-[#F9F9F9] rounded-2xl min-h-[8rem] flex flex-col">
+                        {materials.length === 0 ? (
+                            <div 
+                                className="flex-grow flex flex-col items-center justify-center border-2 border-dashed border-[#C7C7CC] rounded-xl cursor-pointer hover:bg-[#E5E5EA] transition-colors p-4"
+                                onClick={() => fileInputRef.current?.click()}
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={handleDrop}
+                            >
+                                <input 
+                                    type="file" 
+                                    multiple 
+                                    ref={fileInputRef} 
+                                    className="hidden" 
+                                    accept="image/png, image/jpeg, application/pdf"
+                                    onChange={handleFileChange}
+                                />
+                                <UploadCloudIcon className="w-8 h-8 text-[#8E8E93] mb-2" />
+                                <p className="text-sm font-medium text-[#1C1C1E]">{T.flashcardGenerator.uploadFiles}</p>
+                                <p className="text-xs text-[#8E8E93] mt-1">{T.flashcardGenerator.dropFiles}</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-xs font-semibold text-[#8E8E93] uppercase">{materials.length} {T.flashcardGenerator.filesSelected}</span>
+                                    <button 
+                                        onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                                        className="text-[#007AFF] text-xs font-bold hover:underline"
+                                    >
+                                        + Add More
+                                    </button>
+                                     <input 
+                                        type="file" 
+                                        multiple 
+                                        ref={fileInputRef} 
+                                        className="hidden" 
+                                        accept="image/png, image/jpeg, application/pdf"
+                                        onChange={handleFileChange}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto pr-1">
+                                    {materials.map(m => (
+                                        <div key={m.id} className="bg-white border border-[#E5E5EA] rounded-xl p-2 flex items-center justify-between">
+                                            <div className="flex items-center gap-2 overflow-hidden">
+                                                <div className="w-8 h-8 bg-[#F2F2F7] rounded-lg flex items-center justify-center text-[#8E8E93] flex-shrink-0">
+                                                    <FileIcon className="w-4 h-4" />
+                                                </div>
+                                                <span className="text-sm text-[#1C1C1E] truncate">{m.name}</span>
+                                            </div>
+                                            <button 
+                                                onClick={(e) => handleDeleteMaterial(m.id, e)}
+                                                className="p-1.5 text-[#FF3B30] hover:bg-[#FF3B30]/10 rounded-full transition-colors"
+                                            >
+                                                <TrashIcon className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
-                <button
-                    onClick={handleGenerate}
-                    disabled={isLoading}
-                    className="md:w-48 bg-[#007AFF] text-white font-bold rounded-2xl hover:bg-[#0062cc] disabled:bg-[#C7C7CC] disabled:cursor-not-allowed transition-all flex flex-col items-center justify-center p-4 active:scale-95"
-                >
-                    {isLoading ? <Loader2 className="animate-spin w-6 h-6 mb-1" /> : <RefreshCwIcon className="w-6 h-6 mb-1" />}
-                    <span className="text-sm">{isLoading ? T.flashcardGenerator.generatingButton : T.flashcardGenerator.generateButton}</span>
-                </button>
             </div>
+
+            <button
+                onClick={handleGenerate}
+                disabled={isLoading}
+                className="w-full py-3.5 bg-[#007AFF] text-white font-bold rounded-xl shadow-lg shadow-blue-200 hover:bg-[#0062cc] disabled:bg-[#C7C7CC] disabled:shadow-none disabled:cursor-not-allowed transition-all active:scale-95 flex items-center justify-center"
+            >
+                {isLoading ? <Loader2 className="animate-spin mr-2" /> : null}
+                {isLoading ? T.flashcardGenerator.generatingButton : T.flashcardGenerator.generateButton}
+            </button>
         </div>
-        
-        {error && <div className="mb-6 p-4 bg-[#FF3B30]/10 text-[#FF3B30] rounded-2xl font-medium text-center">{error}</div>}
 
-        <div className="min-h-[400px]">
-            {isLoading ? (
-                <div className="h-[400px] flex flex-col items-center justify-center bg-white rounded-[2rem] border border-[#E5E5EA] shadow-sm">
-                    <Loader2 className="w-12 h-12 text-[#007AFF] animate-spin mb-4" />
-                    <p className="text-[#8E8E93] font-medium animate-pulse">{T.flashcardGenerator.generatingButton}</p>
-                </div>
-            ) : flashcards.length > 0 ? (
-                <div className="flex flex-col items-center max-w-2xl mx-auto">
-                    {/* Progress Bar */}
-                    <div className="w-full flex items-center gap-3 mb-6 px-2">
-                        <span className="text-xs font-semibold text-[#8E8E93] font-mono min-w-[3rem] text-right">
-                            {currentIndex + 1} / {flashcards.length}
-                        </span>
-                        <div className="flex-grow h-2 bg-[#E5E5EA] rounded-full overflow-hidden">
-                             <div 
-                                className="h-full bg-[#007AFF] transition-all duration-500 ease-out rounded-full"
-                                style={{ width: `${((currentIndex + 1) / flashcards.length) * 100}%` }}
-                            />
-                        </div>
-                    </div>
+        {error && <div className="p-4 bg-[#FF3B30]/10 text-[#FF3B30] rounded-2xl font-medium text-center mb-8">{error}</div>}
 
-                    {/* Card */}
-                    <div className="w-full aspect-[3/2] perspective-[1200px] group">
+        {/* Results Section */}
+        {flashcards.length > 0 && !isLoading && (
+            <div className="animate-fade-in-up">
+                 {/* Progress Bar */}
+                <div className="flex items-center gap-4 mb-6 px-4">
+                     <span className="text-sm font-medium text-[#8E8E93] w-12 text-right">{(currentIndex + 1).toString().padStart(2, '0')}</span>
+                     <div className="flex-1 h-2 bg-[#E5E5EA] rounded-full overflow-hidden">
                         <div 
-                            className={`relative w-full h-full cursor-pointer transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] [transform-style:preserve-3d] shadow-xl hover:shadow-2xl rounded-[2rem] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}
-                            onClick={handleFlip}
-                        >
-                            {/* Front */}
-                            <div className="absolute inset-0 w-full h-full [backface-visibility:hidden] bg-gradient-to-br from-[#007AFF] to-[#0055B3] text-white rounded-[2rem] flex flex-col items-center justify-center p-8 md:p-12 text-center border border-white/10">
-                                <span className="absolute top-8 left-8 text-xs font-bold uppercase tracking-widest opacity-60 bg-black/20 px-3 py-1 rounded-full">Question</span>
-                                <p className="text-2xl md:text-3xl font-bold leading-snug drop-shadow-sm overflow-y-auto max-h-full no-scrollbar">
-                                    {flashcards[currentIndex].question}
-                                </p>
-                                <span className="absolute bottom-6 text-xs font-medium opacity-60 animate-pulse">Tap to flip or press Space</span>
-                                
-                                <button 
-                                    onClick={handleSpeak} 
-                                    className="absolute top-6 right-6 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors backdrop-blur-sm"
-                                >
-                                    <Volume2Icon className="w-5 h-5 text-white" />
-                                </button>
-                            </div>
-                            
-                            {/* Back */}
-                            <div className="absolute inset-0 w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white text-[#1C1C1E] rounded-[2rem] flex flex-col items-center justify-center p-8 md:p-12 text-center border border-[#E5E5EA]">
-                                <span className="absolute top-8 left-8 text-xs font-bold text-[#8E8E93] uppercase tracking-widest bg-[#F2F2F7] px-3 py-1 rounded-full">Answer</span>
-                                <p className="text-xl md:text-2xl font-medium leading-relaxed overflow-y-auto max-h-full no-scrollbar">
-                                    {flashcards[currentIndex].answer}
-                                </p>
-                                
-                                <button 
-                                    onClick={handleSpeak} 
-                                    className="absolute top-6 right-6 p-2 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] transition-colors"
-                                >
-                                    <Volume2Icon className={`w-5 h-5 ${isSpeaking ? 'text-[#007AFF]' : 'text-[#8E8E93]'}`} />
-                                </button>
-                            </div>
+                            className="h-full bg-[#007AFF] transition-all duration-300 ease-out"
+                            style={{ width: `${((currentIndex + 1) / flashcards.length) * 100}%` }}
+                        ></div>
+                     </div>
+                     <span className="text-sm font-medium text-[#8E8E93] w-12">{flashcards.length.toString().padStart(2, '0')}</span>
+                </div>
+
+                <div className="relative h-80 md:h-96 w-full perspective-1000 group">
+                    <div 
+                        className={`relative w-full h-full transition-all duration-500 transform-style-3d cursor-pointer ${isFlipped ? 'rotate-y-180' : ''}`}
+                        onClick={handleFlip}
+                    >
+                        {/* Front */}
+                        <div className="absolute inset-0 backface-hidden bg-white rounded-3xl shadow-xl shadow-blue-900/5 border border-[#E5E5EA] flex flex-col items-center justify-center p-8 md:p-12 text-center">
+                            <span className="text-xs font-bold tracking-widest text-[#8E8E93] uppercase mb-6">Question</span>
+                            <p className="text-xl md:text-2xl font-medium text-[#1C1C1E] leading-relaxed select-none">{flashcards[currentIndex].question}</p>
+                             <p className="mt-8 text-sm text-[#007AFF] font-semibold opacity-0 group-hover:opacity-100 transition-opacity">Tap to Flip</p>
+                        </div>
+
+                        {/* Back */}
+                        <div className="absolute inset-0 backface-hidden rotate-y-180 bg-gradient-to-br from-[#007AFF] to-[#0055D4] rounded-3xl shadow-xl shadow-blue-500/20 text-white flex flex-col items-center justify-center p-8 md:p-12 text-center">
+                            <span className="text-xs font-bold tracking-widest text-white/60 uppercase mb-6">Answer</span>
+                            <p className="text-xl md:text-2xl font-medium leading-relaxed select-none">{flashcards[currentIndex].answer}</p>
                         </div>
                     </div>
-                    
-                    {/* Controls */}
-                    <div className="mt-8 flex items-center justify-between w-full px-4 md:px-12">
-                         <button 
-                            onClick={handlePrev} 
-                            disabled={currentIndex === 0} 
-                            className="flex flex-col items-center gap-2 group disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                         >
-                            <div className="w-14 h-14 rounded-full bg-white border border-[#E5E5EA] shadow-sm flex items-center justify-center group-hover:bg-[#F2F2F7] group-active:scale-95 transition-all">
-                                <ArrowLeftIcon className="w-6 h-6 text-[#1C1C1E]" />
-                            </div>
-                            <span className="text-xs font-medium text-[#8E8E93]">Prev</span>
-                         </button>
-
-                         <button 
-                            onClick={handleFlip} 
-                            className="px-8 py-3 bg-[#1C1C1E] text-white rounded-full font-bold shadow-lg hover:bg-black transition-transform active:scale-95 hidden md:block"
-                         >
-                             {isFlipped ? "Show Question" : "Reveal Answer"}
-                         </button>
-
-                         <button 
-                            onClick={handleNext} 
-                            disabled={currentIndex === flashcards.length - 1} 
-                            className="flex flex-col items-center gap-2 group disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                         >
-                            <div className="w-14 h-14 rounded-full bg-white border border-[#E5E5EA] shadow-sm flex items-center justify-center group-hover:bg-[#F2F2F7] group-active:scale-95 transition-all">
-                                <ArrowRightIcon className="w-6 h-6 text-[#1C1C1E]" />
-                            </div>
-                            <span className="text-xs font-medium text-[#8E8E93]">Next</span>
-                         </button>
-                    </div>
-                    <p className="mt-6 text-xs text-[#AEAEB2] text-center hidden md:block">
-                        Use <kbd className="font-sans px-1 py-0.5 bg-[#E5E5EA] rounded text-[#1C1C1E]">←</kbd> <kbd className="font-sans px-1 py-0.5 bg-[#E5E5EA] rounded text-[#1C1C1E]">→</kbd> to navigate, <kbd className="font-sans px-1 py-0.5 bg-[#E5E5EA] rounded text-[#1C1C1E]">Space</kbd> to flip
-                    </p>
                 </div>
-            ) : (
-                 <div className="h-[400px] flex flex-col items-center justify-center bg-[#F2F2F7] rounded-[2rem] border border-dashed border-[#C7C7CC] group hover:border-[#8E8E93] transition-colors">
-                    <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform duration-300">
-                        <LayersIcon className="w-10 h-10 text-[#C7C7CC] group-hover:text-[#8E8E93] transition-colors" />
-                    </div>
-                    <p className="text-[#8E8E93] font-medium text-lg">{T.flashcardGenerator.placeholderCard}</p>
-                    <p className="text-sm text-[#AEAEB2] mt-2">Enter a topic above to begin</p>
+
+                {/* Navigation Controls */}
+                <div className="flex items-center justify-center gap-6 mt-10">
+                    <button 
+                        onClick={handlePrev}
+                        disabled={currentIndex === 0}
+                        className="p-4 rounded-full bg-white border border-[#E5E5EA] shadow-sm text-[#1C1C1E] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#F2F2F7] transition-all active:scale-90"
+                    >
+                        <ArrowLeftIcon className="w-6 h-6" />
+                    </button>
+
+                     <button 
+                        onClick={(e) => handleSpeak(e)}
+                        className={`p-4 rounded-full border shadow-sm transition-all active:scale-90 ${isSpeaking ? 'bg-[#007AFF] border-[#007AFF] text-white' : 'bg-white border-[#E5E5EA] text-[#1C1C1E] hover:bg-[#F2F2F7]'}`}
+                    >
+                        <Volume2Icon className="w-6 h-6" />
+                    </button>
+
+                    <button 
+                        onClick={handleNext}
+                        disabled={currentIndex === flashcards.length - 1}
+                        className="p-4 rounded-full bg-white border border-[#E5E5EA] shadow-sm text-[#1C1C1E] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#F2F2F7] transition-all active:scale-90"
+                    >
+                         <ArrowLeftIcon className="w-6 h-6 rotate-180" />
+                    </button>
                 </div>
-            )}
-        </div>
+                 <p className="text-center text-xs text-[#8E8E93] mt-6">
+                    Use <span className="font-mono bg-[#E5E5EA] px-1 rounded">←</span> <span className="font-mono bg-[#E5E5EA] px-1 rounded">→</span> to navigate, <span className="font-mono bg-[#E5E5EA] px-1 rounded">Space</span> to flip
+                </p>
+            </div>
+        )}
     </div>
   );
 };
-
 
 export default FlashcardGenerator;

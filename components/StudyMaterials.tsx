@@ -1,8 +1,9 @@
 
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { StudyMaterial, Language, View } from '../types';
 import { translations } from '../lib/translations';
-import { ArrowLeftIcon, UploadCloudIcon, FileIcon, TrashIcon, PaperclipIcon } from './icons';
+import { generateSummary } from '../services/geminiService';
+import { ArrowLeftIcon, UploadCloudIcon, FileIcon, TrashIcon, PaperclipIcon, SparklesIcon, Loader2, XIcon, FileTextIcon, ImageIcon } from './icons';
 
 interface StudyMaterialsProps {
   materials: StudyMaterial[];
@@ -15,6 +16,9 @@ const StudyMaterials: React.FC<StudyMaterialsProps> = ({ materials, setMaterials
   const T = translations[language].materials;
   const commonT = translations[language].common;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [summarizingId, setSummarizingId] = useState<string | null>(null);
+  const [summary, setSummary] = useState<{ id: string, name: string, text: string } | null>(null);
 
   const processFile = (file: File) => {
     // Validate file type
@@ -55,6 +59,23 @@ const StudyMaterials: React.FC<StudyMaterialsProps> = ({ materials, setMaterials
   const handleDelete = (id: string) => {
     setMaterials(prev => prev.filter(m => m.id !== id));
   };
+  
+  const handleSummarize = async (material: StudyMaterial) => {
+      setSummarizingId(material.id);
+      try {
+          const result = await generateSummary(material, language);
+          setSummary({
+              id: material.id,
+              name: material.name,
+              text: result
+          });
+      } catch (error) {
+          console.error(error);
+          alert("Failed to generate summary. Please try again.");
+      } finally {
+          setSummarizingId(null);
+      }
+  };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -63,8 +84,15 @@ const StudyMaterials: React.FC<StudyMaterialsProps> = ({ materials, setMaterials
     }
   };
 
+  const getFileIcon = (mimeType: string) => {
+      if (mimeType === 'application/pdf') {
+          return <FileTextIcon className="w-5 h-5" />;
+      }
+      return <ImageIcon className="w-5 h-5" />;
+  };
+
   return (
-    <div className="max-w-4xl mx-auto animate-fade-in pb-12">
+    <div className="max-w-4xl mx-auto animate-fade-in pb-12 relative">
         <div className="flex items-center gap-4 mb-6">
             <button onClick={() => onNavigate('dashboard')} className="flex items-center gap-1 text-[#007AFF] hover:opacity-80 font-medium transition-opacity">
                 <ArrowLeftIcon className="w-5 h-5" />
@@ -87,7 +115,7 @@ const StudyMaterials: React.FC<StudyMaterialsProps> = ({ materials, setMaterials
                 multiple 
                 ref={fileInputRef} 
                 className="hidden" 
-                accept="image/png, image/jpeg, application/pdf"
+                accept=".pdf, .png, .jpg, .jpeg, image/png, image/jpeg, application/pdf"
                 onChange={handleFileChange}
             />
             <div className="w-16 h-16 bg-[#007AFF]/10 rounded-full flex items-center justify-center text-[#007AFF] mb-4">
@@ -103,22 +131,37 @@ const StudyMaterials: React.FC<StudyMaterialsProps> = ({ materials, setMaterials
             {materials.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {materials.map(file => (
-                        <div key={file.id} className="bg-white p-4 rounded-2xl border border-[#E5E5EA] shadow-sm flex items-center justify-between group">
+                        <div key={file.id} className="bg-white p-4 rounded-2xl border border-[#E5E5EA] shadow-sm flex items-center justify-between group relative overflow-hidden">
                             <div className="flex items-center gap-3 overflow-hidden">
                                 <div className="w-10 h-10 bg-[#F2F2F7] rounded-xl flex items-center justify-center text-[#8E8E93] flex-shrink-0">
-                                    <FileIcon className="w-5 h-5" />
+                                    {getFileIcon(file.type)}
                                 </div>
                                 <div className="min-w-0">
                                     <p className="font-medium text-[#1C1C1E] truncate">{file.name}</p>
                                     <p className="text-xs text-[#8E8E93] uppercase">{file.type.split('/')[1]}</p>
                                 </div>
                             </div>
-                            <button 
-                                onClick={() => handleDelete(file.id)}
-                                className="p-2 text-[#FF3B30] hover:bg-[#FF3B30]/10 rounded-full transition-colors opacity-0 group-hover:opacity-100"
-                            >
-                                <TrashIcon className="w-5 h-5" />
-                            </button>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={() => handleSummarize(file)}
+                                    disabled={summarizingId === file.id}
+                                    className="p-2 text-[#007AFF] hover:bg-[#007AFF]/10 rounded-full transition-colors flex items-center gap-1"
+                                    title={T.summarizeButton}
+                                >
+                                    {summarizingId === file.id ? (
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                    ) : (
+                                        <SparklesIcon className="w-5 h-5" />
+                                    )}
+                                </button>
+                                <button 
+                                    onClick={() => handleDelete(file.id)}
+                                    className="p-2 text-[#FF3B30] hover:bg-[#FF3B30]/10 rounded-full transition-colors"
+                                    title="Delete"
+                                >
+                                    <TrashIcon className="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -129,6 +172,39 @@ const StudyMaterials: React.FC<StudyMaterialsProps> = ({ materials, setMaterials
                 </div>
             )}
         </div>
+
+        {/* Summary Modal */}
+        {summary && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-fade-in">
+                <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[80vh] flex flex-col overflow-hidden animate-fade-in-up">
+                    <div className="p-6 border-b border-[#E5E5EA] flex items-center justify-between bg-[#F9F9F9]">
+                        <div>
+                             <h3 className="text-lg font-bold text-[#1C1C1E]">{T.summaryTitle}</h3>
+                             <p className="text-sm text-[#8E8E93] truncate max-w-[300px]">{summary.name}</p>
+                        </div>
+                        <button 
+                            onClick={() => setSummary(null)}
+                            className="p-2 rounded-full hover:bg-[#E5E5EA] transition-colors text-[#8E8E93] hover:text-[#1C1C1E]"
+                        >
+                            <XIcon className="w-6 h-6" />
+                        </button>
+                    </div>
+                    <div className="p-6 overflow-y-auto">
+                        <div className="prose prose-blue max-w-none text-[#1C1C1E] leading-relaxed whitespace-pre-line">
+                            {summary.text}
+                        </div>
+                    </div>
+                    <div className="p-4 border-t border-[#E5E5EA] flex justify-end">
+                        <button 
+                            onClick={() => setSummary(null)}
+                            className="px-6 py-2.5 bg-[#007AFF] text-white font-semibold rounded-xl hover:bg-[#0062cc] transition-colors"
+                        >
+                            {T.closeButton}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
     </div>
   );
 };
