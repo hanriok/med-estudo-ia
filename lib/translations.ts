@@ -40,6 +40,7 @@ type Translations = {
       periods: string[];
       loginButton: string;
       googleLoginButton: string;
+      guestLoginButton: string;
       createAccountButton: string;
       toggleToLogin: string;
       toggleToRegister: string;
@@ -178,7 +179,7 @@ export const translations: Translations = {
         footer: "This is a required step for the application to function."
     },
     auth: {
-        title: "Welcome to MedIQ AI",
+        title: "Welcome to MED Estudo IA",
         createAccountTitle: "Create Your Account",
         loginTitle: "Login to Your Account",
         form: {
@@ -203,6 +204,7 @@ export const translations: Translations = {
         periods: ["1st Period", "2nd Period", "3rd Period", "4th Period", "5th Period", "6th Period", "7th Period", "8th Period", "9th Period", "10th Period", "11th Period", "12th Period"],
         loginButton: "Login",
         googleLoginButton: "Login with Google",
+        guestLoginButton: "Enter without logging in",
         createAccountButton: "Create Account",
         toggleToLogin: "Already have an account? Login",
         toggleToRegister: "Don't have an account? Create one",
@@ -365,7 +367,7 @@ export const translations: Translations = {
         footer: "Este é um passo obrigatório para que a aplicação funcione."
     },
     auth: {
-        title: "Bem-vindo ao MedIQ AI",
+        title: "Bem-vindo ao MED Estudo IA",
         createAccountTitle: "Crie Sua Conta",
         loginTitle: "Acesse Sua Conta",
         form: {
@@ -390,6 +392,7 @@ export const translations: Translations = {
         periods: ["1º Período", "2º Período", "3º Período", "4º Período", "5º Período", "6º Período", "7º Período", "8º Período", "9º Período", "10º Período", "11º Período", "12º Período"],
         loginButton: "Entrar",
         googleLoginButton: "Entrar com Google",
+        guestLoginButton: "Entrar sem logar",
         createAccountButton: "Criar Conta",
         toggleToLogin: "Já tem uma conta? Faça login",
         toggleToRegister: "Não tem uma conta? Crie uma",

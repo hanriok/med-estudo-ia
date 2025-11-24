@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { User, ProgressData, View, Language, StudyMaterial } from './types';
 import { translations } from './lib/translations';
@@ -11,10 +10,6 @@ import ProgressTracker from './components/ProgressTracker';
 import Settings from './components/Settings';
 import StudyMaterials from './components/StudyMaterials';
 import { BrainCircuitIcon, StethoscopeIcon, LayoutDashboardIcon, LineChartIcon, BotMessageSquareIcon, FileTextIcon, LayersIcon, LogOutIcon, Volume2Icon, SettingsIcon, GraduationCapIcon, ChevronDownIcon, PaperclipIcon } from './components/icons';
-import { isApiKeySet } from './services/geminiService';
-import ApiKeyMissingScreen from './components/ApiKeyMissingScreen';
-
-const KEY_IS_CONFIGURED = isApiKeySet();
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -40,10 +35,6 @@ const App: React.FC = () => {
         }));
     };
   }, [currentView, user]);
-
-  if (!KEY_IS_CONFIGURED) {
-    return <ApiKeyMissingScreen language={language} setLanguage={setLanguage} />;
-  }
 
   const handleLogin = (loggedInUser: User) => {
     setUser(loggedInUser);
@@ -116,7 +107,7 @@ const App: React.FC = () => {
           <div className="bg-blue-500 p-2 rounded-xl shadow-sm">
             <StethoscopeIcon className="h-6 w-6 text-white" />
           </div>
-          <h1 className="hidden md:block ml-3 text-xl font-bold tracking-tight text-[#1C1C1E]">MedIQ AI</h1>
+          <h1 className="hidden md:block ml-3 text-xl font-bold tracking-tight text-[#1C1C1E]">MED Estudo IA</h1>
         </div>
         
         <nav className="flex-1 px-3 space-y-1">

@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 import { LearningStyle, Question, Flashcard, ChatMessage, Language, StudyMaterial } from '../types';
 
@@ -9,7 +8,7 @@ export const isApiKeySet = (): boolean => {
 let ai: GoogleGenAI | null = null;
 const getAi = (): GoogleGenAI => {
     if (!isApiKeySet()) {
-        throw new Error("API_KEY environment variable is not set. Cannot initialize GoogleGenAI.");
+        throw new Error("API_KEY environment variable is not set.");
     }
     if (!ai) {
         ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
@@ -34,7 +33,59 @@ const getLearningStylePrompt = (style: LearningStyle, language: Language): strin
   return prompts[language][style] || (language === 'pt' ? "Forneça uma explicação detalhada." : "Provide a detailed explanation.");
 };
 
+// --- MOCK DATA GENERATORS FOR DEMO MODE ---
+const getMockQuestion = (topic: string, language: Language): Question => {
+    if (language === 'pt') {
+        return {
+            question: `[Modo Demo - Sem Chave API] Qual é a principal função das mitocôndrias em uma célula? (Tópico: ${topic})`,
+            options: {
+                A: "Síntese de proteínas",
+                B: "Produção de ATP (Energia)",
+                C: "Divisão celular",
+                D: "Armazenamento de DNA"
+            },
+            correctAnswer: "B",
+            explanation: "Esta é uma resposta de demonstração. Em um ambiente real com a Chave API configurada, a IA geraria uma explicação clínica detalhada baseada no seu estilo de aprendizado. As mitocôndrias são conhecidas como a 'casa de força' da célula."
+        };
+    }
+    return {
+        question: `[Demo Mode - No API Key] What is the primary function of mitochondria in a cell? (Topic: ${topic})`,
+        options: {
+            A: "Protein Synthesis",
+            B: "ATP Production (Energy)",
+            C: "Cell Division",
+            D: "DNA Storage"
+        },
+        correctAnswer: "B",
+        explanation: "This is a demo response. In a live environment with the API Key set, the AI would generate a detailed clinical explanation based on your learning style. Mitochondria are known as the powerhouse of the cell."
+    };
+};
+
+const getMockFlashcards = (topic: string, count: number, language: Language): Flashcard[] => {
+    const cards = [];
+    for (let i = 0; i < count; i++) {
+        cards.push({
+            id: i,
+            question: language === 'pt' 
+                ? `[Demo ${i+1}] O que é ${topic}?` 
+                : `[Demo ${i+1}] What is ${topic}?`,
+            answer: language === 'pt'
+                ? "Esta é uma resposta gerada localmente porque a Chave API não foi detectada."
+                : "This is a locally generated answer because the API Key was not detected."
+        });
+    }
+    return cards;
+};
+
+// --- END MOCK DATA ---
+
 export const generateQuestion = async (topic: string, style: LearningStyle, period: string, language: Language, materials?: StudyMaterial[]): Promise<Question> => {
+  if (!isApiKeySet()) {
+      console.warn("API Key missing. Returning mock question.");
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
+      return getMockQuestion(topic, language);
+  }
+
   const aiInstance = getAi();
   const learningStyleInstruction = getLearningStylePrompt(style, language);
   
@@ -107,6 +158,12 @@ export const generateFlashcards = async (
     difficulty: 'easy' | 'medium' | 'hard' = 'medium',
     materials?: StudyMaterial[]
 ): Promise<Flashcard[]> => {
+    if (!isApiKeySet()) {
+        console.warn("API Key missing. Returning mock flashcards.");
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return getMockFlashcards(inputText || "Demo Topic", count, language);
+    }
+
     const aiInstance = getAi();
     const learningStyleInstruction = getLearningStylePrompt(style, language);
     const isLongText = inputText.length > 100;
@@ -182,7 +239,25 @@ export const generateFlashcards = async (
     }
 };
 
+// Mock Chat Object for Demo Mode
+const createMockChat = (language: Language) => {
+    return {
+        sendMessage: async (msg: string) => {
+            await new Promise(resolve => setTimeout(resolve, 800));
+            return {
+                text: language === 'pt' 
+                    ? "[Modo Demo] Não consigo processar sua solicitação específica porque a Chave API não está configurada. Por favor, adicione sua chave API para conversar com a IA real."
+                    : "[Demo Mode] I cannot process your specific request because the API Key is not configured. Please add your API key to chat with the real AI."
+            };
+        }
+    } as Chat;
+};
+
 export const createTutorChat = (style: LearningStyle, period: string, language: Language, materials?: StudyMaterial[]): Chat => {
+    if (!isApiKeySet()) {
+        return createMockChat(language);
+    }
+
     const aiInstance = getAi();
     const learningStyleInstruction = getLearningStylePrompt(style, language);
     const systemInstruction = language === 'pt'
@@ -196,7 +271,6 @@ export const createTutorChat = (style: LearningStyle, period: string, language: 
         },
     };
 
-    // If materials are present, prime the chat with them in the history
     if (materials && materials.length > 0) {
         const contextMsg = language === 'pt' ? "Aqui estão alguns materiais de contexto (imagens/documentos) para nossa sessão." : "Here are some context materials (images/documents) for our session.";
         const parts: any[] = [{ text: contextMsg }];
@@ -242,11 +316,14 @@ const patientScenarios = {
 };
 
 export const createPatientChat = (period: string, language: Language, materials?: StudyMaterial[]): Chat => {
+    if (!isApiKeySet()) {
+        return createMockChat(language);
+    }
+
     const aiInstance = getAi();
     let scenarios = patientScenarios[language];
     let scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
     
-    // If materials are provided, we ask the AI to generate a patient case BASED on those materials
     if (materials && materials.length > 0) {
         scenario = language === 'pt'
             ? "O cenário clínico é baseado nos documentos médicos ou imagens fornecidos no início do chat. Aja como o paciente descrito ou implícito nesses materiais."
@@ -308,6 +385,12 @@ export const createPatientChat = (period: string, language: Language, materials?
 };
 
 export const evaluateDiagnosis = async (chatHistory: ChatMessage[], style: LearningStyle, period: string, language: Language): Promise<string> => {
+    if (!isApiKeySet()) {
+        return language === 'pt' 
+            ? "DIAGNÓSTICO [MODO DEMO]\n\nComo estamos em modo de demonstração sem chave de API, não posso avaliar seu diagnóstico em detalhes. Por favor, configure a API Key."
+            : "DIAGNOSIS [DEMO MODE]\n\nSince we are in demo mode without an API key, I cannot evaluate your diagnosis in detail. Please configure the API Key.";
+    }
+
     const aiInstance = getAi();
     const learningStyleInstruction = getLearningStylePrompt(style, language);
     const historyString = chatHistory.map(m => `${m.role}: ${m.content}`).join('\n');

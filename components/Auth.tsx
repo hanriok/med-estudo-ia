@@ -77,6 +77,17 @@ const Auth: React.FC<AuthProps> = ({ onLogin, language, setLanguage }) => {
     onLogin(mockUser);
   };
 
+  const handleGuestLogin = () => {
+    const guestUser: User = {
+      name: language === 'pt' ? 'Aluno Convidado' : 'Guest Student',
+      email: 'guest@medestudoia.app',
+      university: 'Guest University',
+      period: language === 'pt' ? '1º Período' : '1st Period',
+      learningStyle: 'visual', // Default style
+    };
+    onLogin(guestUser);
+  };
+
   const handleFinish = () => {
     if (learningStyle) {
         onLogin({ ...userData, learningStyle } as User);
@@ -139,6 +150,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin, language, setLanguage }) => {
             <GoogleIcon className="w-5 h-5" />
             {T.googleLoginButton}
         </button>
+
+        <button type="button" onClick={handleGuestLogin} className="w-full py-3 text-[#8E8E93] font-medium rounded-xl hover:text-[#1C1C1E] hover:bg-[#F2F2F7] transition-colors text-sm">
+            {T.guestLoginButton}
+        </button>
+
         <p className="text-center text-sm mt-4">
             <button type="button" onClick={() => setAuthView('register')} className="font-medium text-[#007AFF] hover:underline">
             {T.toggleToRegister}
@@ -171,7 +187,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, language, setLanguage }) => {
             <button onClick={() => setLanguage('pt')} className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${language === 'pt' ? 'bg-white text-black shadow-sm' : 'text-[#8E8E93]'}`}>PT</button>
       </div>
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-black tracking-tighter text-[#007AFF]">MedIQ AI</h1>
+        <h1 className="text-3xl font-black tracking-tighter text-[#007AFF]">MED Estudo IA</h1>
       </div>
       
       {authView === 'login' && renderLoginForm()}
